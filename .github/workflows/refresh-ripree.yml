@@ -1,0 +1,38 @@
+name: Actualizar catálogo RIPREE
+
+on:
+  schedule:
+    - cron: '23 3 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/refresh-ripree.yml'
+      - 'catalog-service/**'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ripree-public-catalog
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Obtener código
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Comprobar normalizador
+        run: python3 -m unittest discover -s catalog-service -p 'test_*.py' -v
+      - name: Consultar fuente oficial y validar catálogo
+        run: python3 catalog-service/ripree_catalog.py --output catalog/ripree/v1
+      - name: Publicar actualización validada
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add catalog/ripree/v1
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Actualizar catálogo público RIPREE'
+          git push origin HEAD:main
