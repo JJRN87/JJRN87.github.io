@@ -366,7 +366,12 @@ class DownloadTests(unittest.TestCase):
         request = opener.open.call_args.args[0]
         self.assertEqual(request.full_url, catalog.DOWNLOAD_URL)
         self.assertEqual(request.data, b'{"soloConsolidado":true}')
-        self.assertEqual(opener.open.call_args.kwargs["timeout"], 120)
+        self.assertEqual(opener.open.call_args.kwargs["timeout"], 300)
+
+    def test_total_download_deadline_does_not_advance_retrieval_date(self):
+        with mock.patch.object(catalog.time, "monotonic", side_effect=[0, 301]), \
+                self.assertRaises(catalog.CatalogError):
+            self.call_with(FakeResponse())
 
     def test_size_truncation_empty_and_redirect_guards(self):
         bad_responses = [

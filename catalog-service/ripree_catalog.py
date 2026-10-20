@@ -487,8 +487,9 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
         raise CatalogError("Official endpoint redirected; review its URL before fetching")
 
 
-def download_official(attempts: int = 2, timeout: int = 120) -> tuple[bytes, dt.datetime]:
-    require(1 <= attempts <= 3 and 1 <= timeout <= 120, "Invalid download retry/timeout limits")
+def download_official(attempts: int = 2, timeout: int = 300) -> tuple[bytes, dt.datetime]:
+    # The 44 MB national export exceeded two minutes on the first hosted run.
+    require(1 <= attempts <= 3 and 1 <= timeout <= 300, "Invalid download retry/timeout limits")
     opener = urllib.request.build_opener(NoRedirect())
     for attempt in range(attempts):
         request = urllib.request.Request(
